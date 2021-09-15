@@ -36,4 +36,7 @@ export class AuthService {
       password,
     });
   }
+  async loadInfo(id: number) {
+    return;
+  }
 }

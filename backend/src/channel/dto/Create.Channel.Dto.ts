@@ -1,3 +1,3 @@
 export class CreateChannelDto {
-  name: string;
+  channelName: string;
 }

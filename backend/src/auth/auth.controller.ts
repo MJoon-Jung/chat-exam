@@ -7,6 +7,7 @@ import {
   Response,
   UseGuards,
 } from '@nestjs/common';
+import { User } from 'src/common/user.decorator';
 import { JoinRequestDto } from '../dto/join.request.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
@@ -26,8 +27,8 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req) {
-    return req.user;
+  async login(@User() user) {
+    return user;
   }
 
   @UseGuards(LoggedInGuard)

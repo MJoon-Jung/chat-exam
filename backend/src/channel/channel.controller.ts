@@ -7,12 +7,12 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { LoggedInGuard } from 'src/auth/logged-in';
 import { User } from 'src/common/user.decorator';
 import { ChannelService } from './channel.service';
-import { CreateChannelDto } from './dto/Create.Channel.Dto';
 import { ExistChannelGuard } from './guards/exist-channel-guard';
 import { MemberGuard } from './guards/member-guard';
 import { NotMemberGuard } from './guards/not-member-guard';
@@ -23,13 +23,19 @@ export class ChannelController {
   constructor(private readonly channelService: ChannelService) {}
 
   @Get()
-  async getChannels() {
-    return this.channelService.findAll();
+  async loadChannels(@User() user: any) {
+    return this.channelService.findAllByUserId(user.id);
   }
+
+  @Get()
+  async loadChannel(@Query('name') channelName: string) {
+    return this.channelService.findChannelByName(channelName);
+  }
+
   @HttpCode(201)
   @Post()
-  async createChannel(@Body() data: CreateChannelDto, @User() user) {
-    return this.channelService.createChannel(data.name, user.id);
+  async createChannel(@Body() data: any, @User() user) {
+    return this.channelService.createChannel(data.channelName, user.id);
   }
 
   @UseGuards(ExistChannelGuard, NotMemberGuard)

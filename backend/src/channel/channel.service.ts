@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { channel } from 'diagnostics_channel';
 import { ChannelMembers } from 'src/entities/ChannelMembers';
 import { Channels } from 'src/entities/Channels';
 import { Users } from 'src/entities/Users';
@@ -22,11 +23,16 @@ export class ChannelService {
     private connection: Connection,
   ) {}
 
-  async findAll() {
-    return this.channelsRepository.find();
+  async findAllByUserId(userId: number) {
+    return this.connection.query(
+      `SELECT * 
+      FROM channels c LEFT OUTER JOIN channelmembers m
+      ON c.id = m.ChannelId
+      WHERE c.id IN (SELECT ChannelId FROM channelmembers WHERE UserId = ${userId});`,
+    );
   }
 
-  async createChannel(name: string, userId: number) {
+  async createChannel(channelName: string, userId: number) {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -34,12 +40,9 @@ export class ChannelService {
     try {
       const channel: ChannelDto = await queryRunner.manager
         .getRepository(Channels)
-        .save(
-          {
-            name,
-          },
-          { reload: false },
-        );
+        .save({
+          name: channelName,
+        });
       await queryRunner.manager.getRepository(ChannelMembers).save(
         {
           ChannelId: channel.id,
@@ -48,12 +51,22 @@ export class ChannelService {
         { reload: false },
       );
       await queryRunner.commitTransaction();
+      return this.channelsRepository.findOne({
+        join: {
+          alias: 'channel',
+          leftJoin: {
+            ChannelMembers: 'channel.ChannelMembers',
+          },
+        },
+        where: {
+          id: channel.id,
+        },
+      });
     } catch (err) {
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
     }
-    return { success: true };
   }
   async findOne(id: number) {
     const channel = await this.channelsRepository.findOne({
@@ -92,5 +105,12 @@ export class ChannelService {
       throw new ForbiddenException('채널에 두명 이상이 존재합니다.');
     }
     return number;
+  }
+  async findChannelByName(channelName: string) {
+    return this.channelsRepository
+      .createQueryBuilder('channel')
+      .leftJoin(ChannelMembers, 'members', 'members.ChannelId = channel.id')
+      .where('channel.name = :channelName', { channelName })
+      .getMany();
   }
 }
