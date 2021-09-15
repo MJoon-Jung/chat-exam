@@ -1,9 +1,8 @@
-import axios from 'axios';
+import axios from "axios";
 
 const client = axios.create({
-  baseURL: 'http://localhost:3065/api',
+  baseURL: "http://localhost:3065/api",
+  withCredentials: true,
 });
-
-// axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
 
 export default client;

@@ -10,6 +10,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import './index.css';
 import Home from './pages';
+import ChatRoom from './components/ChatRoom';
 const App = () => {
   return (
     <Router>
@@ -18,6 +19,7 @@ const App = () => {
         <Route exact path="/"><Home /></Route>
         <Route path="/login"><Login /></Route>
         <Route path="/register"><Signup /></Route>
+        <Route path="/room"><ChatRoom /></Route>
         <Redirect path="*" to="/" />
       </Switch>
   </Router>
