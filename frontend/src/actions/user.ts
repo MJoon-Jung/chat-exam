@@ -96,3 +96,15 @@ export const loadRoom = createAsyncThunk(
     }
   }
 );
+
+export const loadRoomChats = createAsyncThunk(
+  "user/loadRoomChats",
+  async (channelId: number, { rejectWithValue }) => {
+    try {
+      const response = await client.get(`channel/${channelId}/chats`);
+      return response.data;
+    } catch (err: any) {
+      rejectWithValue(err.response.data);
+    }
+  }
+);  

@@ -1,8 +1,9 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
   createRoom,
   joinRoom,
   loadRoom,
+  loadRoomChats,
   loadRooms,
   login,
   signup,
@@ -12,8 +13,10 @@ import { User } from "../types/user.type";
 const userSlice = createSlice({
   name: "user",
   initialState: {
-    myInfo: null as User | null,
+    myInfo: null as any,
     roomsInfo: [] as any,
+    chatsInfo: {} as any,
+    currentRoom: null as number | null,
     loadMyInfoLoading: false,
     loadMyInfoDone: false,
     loadMyInfoError: null as string | null,
@@ -35,8 +38,16 @@ const userSlice = createSlice({
     loadRoomsLoading: false,
     loadRoomsDone: false,
     loadRoomsError: null as any,
+    loadRoomChatsLoading: false,
+    loadRoomChatsDone: false,
+    loadRoomChatsError: null as any,
   },
-  reducers: {},
+  reducers: {
+    setCurrentRoom: (state, action: PayloadAction<{ currentRoom: number }>) => {
+      console.log(action.payload.currentRoom);
+      state.currentRoom = action.payload.currentRoom;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => {
@@ -122,9 +133,25 @@ const userSlice = createSlice({
         state.loadRoomsLoading = false;
         state.loadRoomsError = action.payload;
       })
+      .addCase(loadRoomChats.pending, (state) => {
+        state.loadRoomChatsLoading = true;
+        state.loadRoomChatsDone = false;
+        state.loadRoomChatsError = null;
+      })
+      .addCase(loadRoomChats.fulfilled, (state, action) => {
+        state.loadRoomChatsLoading = false;
+        state.loadRoomChatsDone = true;
+        const z = action.payload;
+        state.chatsInfo = { ...state.chatsInfo, ...z };
+      })
+      .addCase(loadRoomChats.rejected, (state, action) => {
+        state.loadRoomChatsLoading = false;
+        state.loadRoomChatsError = action.payload;
+      })
 
       .addDefaultCase((state) => state);
   },
 });
 
+export const { setCurrentRoom } = userSlice.actions;
 export default userSlice.reducer;
