@@ -4,10 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { channel } from 'diagnostics_channel';
+import { ChannelChats } from 'src/entities/ChannelChat';
 import { ChannelMembers } from 'src/entities/ChannelMembers';
 import { Channels } from 'src/entities/Channels';
-import { Users } from 'src/entities/Users';
+import { EventGateway } from 'src/event/event.gateway';
 import { Connection, Repository } from 'typeorm';
 import { ChannelDto } from './dto/channel.dto';
 
@@ -18,18 +18,39 @@ export class ChannelService {
     private channelsRepository: Repository<Channels>,
     @InjectRepository(ChannelMembers)
     private channelmembersRepository: Repository<ChannelMembers>,
-    @InjectRepository(Users)
-    private usersRepository: Repository<Users>,
+    @InjectRepository(ChannelChats)
+    private channelchatsRepository: Repository<ChannelChats>,
     private connection: Connection,
+    private readonly eventsGateway: EventGateway,
   ) {}
 
   async findAllByUserId(userId: number) {
-    return this.connection.query(
-      `SELECT * 
-      FROM channels c LEFT OUTER JOIN channelmembers m
-      ON c.id = m.ChannelId
-      WHERE c.id IN (SELECT ChannelId FROM channelmembers WHERE UserId = ${userId});`,
-    );
+    // return this.connection.query(
+    //   `SELECT *
+    //   FROM channels c LEFT JOIN channelmembers m
+    //   ON c.id = m.ChannelId
+    //   WHERE m.UserId = ${userId}
+    //   AND c.id IN (SELECT ChannelId FROM channelmembers WHERE UserId = ${userId});`,
+    // );
+
+    return this.channelsRepository
+      .createQueryBuilder('channels')
+      .leftJoinAndSelect(
+        ChannelMembers,
+        'members',
+        'members.ChannelId = channels.id',
+      )
+      .where('members.UserId = :userId', { userId })
+      .andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('cm.ChannelId')
+          .from(ChannelMembers, 'cm')
+          .where('cm.UserId = :userId', { userId })
+          .getQuery();
+        return 'channels.id IN ' + subQuery;
+      })
+      .getMany();
   }
 
   async createChannel(channelName: string, userId: number) {
@@ -78,9 +99,23 @@ export class ChannelService {
     return channel;
   }
   async joinChannel(channelId: number, userId: number) {
-    return this.channelmembersRepository.save({
-      ChannelId: channelId,
-      UserId: userId,
+    await this.channelmembersRepository.save(
+      {
+        ChannelId: channelId,
+        UserId: userId,
+      },
+      { reload: false },
+    );
+    return this.channelsRepository.findOne({
+      join: {
+        alias: 'channel',
+        leftJoin: {
+          ChannelMembers: 'channel.ChannelMembers',
+        },
+      },
+      where: {
+        id: channelId,
+      },
     });
   }
 
@@ -112,5 +147,32 @@ export class ChannelService {
       .leftJoin(ChannelMembers, 'members', 'members.ChannelId = channel.id')
       .where('channel.name = :channelName', { channelName })
       .getMany();
+  }
+  async findChatsByChannelId(channelId: number) {
+    const chat = await this.channelsRepository
+      .createQueryBuilder('channels')
+      .leftJoinAndSelect('channels.ChannelChats', 'chats')
+      .where('channels.id = :channelId', { channelId })
+      .orderBy({ 'chats.createdAt': 'ASC' })
+      .getMany();
+    console.log(chat);
+    return chat[0];
+  }
+
+  async createChats(channelId: number, content: string, userId: number) {
+    const savedChat = await this.channelchatsRepository.save({
+      content,
+      UserId: userId,
+      ChannelId: channelId,
+    });
+    const chatWithUser = await this.channelchatsRepository.findOne({
+      where: {
+        id: savedChat.id,
+      },
+      relations: ['User', 'Channel'],
+    });
+    this.eventsGateway.server
+      .to(`/ws-${chatWithUser.ChannelId}`)
+      .emit('message', chatWithUser);
   }
 }

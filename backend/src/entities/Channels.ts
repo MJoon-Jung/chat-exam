@@ -1,8 +1,9 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ChannelChats } from './ChannelChat';
 import { ChannelMembers } from './ChannelMembers';
+import { Datetime } from './Datetime';
 @Entity({ name: 'channels' })
-export class Channels {
+export class Channels extends Datetime {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 

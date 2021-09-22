@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { stringify } from 'querystring';
 import { LoggedInGuard } from 'src/auth/logged-in';
 import { User } from 'src/common/user.decorator';
 import { ChannelService } from './channel.service';
@@ -27,9 +28,14 @@ export class ChannelController {
     return this.channelService.findAllByUserId(user.id);
   }
 
-  @Get()
+  @Get('search')
   async loadChannel(@Query('name') channelName: string) {
     return this.channelService.findChannelByName(channelName);
+  }
+  @UseGuards(ExistChannelGuard, MemberGuard)
+  @Get(':channelId/chats')
+  async loadChats(@Param('channelId', ParseIntPipe) channelId: number) {
+    return this.channelService.findChatsByChannelId(channelId);
   }
 
   @HttpCode(201)
@@ -57,5 +63,15 @@ export class ChannelController {
   @Delete(':channelId')
   async removeChannel(@Param('channelId', ParseIntPipe) channelId: number) {
     return this.channelService.removeChannel(channelId);
+  }
+
+  @UseGuards(ExistChannelGuard, MemberGuard)
+  @Post(':channelId/chats')
+  async createChats(
+    @Param('channelId', ParseIntPipe) channelId: number,
+    @Body('content') content,
+    @User() user,
+  ) {
+    return this.channelService.createChats(channelId, content, user.id);
   }
 }

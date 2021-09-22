@@ -7,10 +7,11 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Channels } from './Channels';
+import { Datetime } from './Datetime';
 import { Users } from './Users';
 
 @Entity({ name: 'channelchats' })
-export class ChannelChats {
+export class ChannelChats extends Datetime {
   @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
