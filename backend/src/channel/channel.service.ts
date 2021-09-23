@@ -165,14 +165,15 @@ export class ChannelService {
       UserId: userId,
       ChannelId: channelId,
     });
-    const chatWithUser = await this.channelchatsRepository.findOne({
-      where: {
-        id: savedChat.id,
-      },
-      relations: ['User', 'Channel'],
-    });
+    // const chatWithUser = await this.channelchatsRepository.findOne({
+    //   where: {
+    //     id: savedChat.id,
+    //   },
+    //   relations: ['User', 'Channel'],
+    // });
+    // console.log(chatWithUser);
     this.eventsGateway.server
-      .to(`/ws-${chatWithUser.ChannelId}`)
-      .emit('message', chatWithUser);
+      .to(`/ws-1-${channelId}`)
+      .emit('message', savedChat);
   }
 }

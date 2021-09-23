@@ -11,7 +11,9 @@ import {
 import { Server, Socket } from 'socket.io';
 import { onlineMap } from './onlineMap';
 
-@WebSocketGateway({ namespace: /\/ws-.+/ })
+@WebSocketGateway({
+  namespace: /\/ws-.+/,
+})
 export class EventGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {

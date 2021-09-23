@@ -1,6 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { loadRoomChats } from '../actions/user';
-import { setCurrentRoom } from '../features/userSlice';
+import { addChannelChat, setCurrentRoom } from '../features/userSlice';
+import useSocket from '../hooks/useSocket';
 import { useAppDispatch, useAppSelector } from '../store/store';
 import ChatLayout from './ChatLayout';
 import Profile from './Profile';
@@ -8,14 +10,27 @@ import RoomCard from './RoomCard';
 import RoomLogo from './RoomLogo';
 
 const ChatRoom = () => {
+  const [socket] = useSocket(1);
+  const { roomsInfo, myInfo, currentRoom, chatsInfo } = useAppSelector((state) => state.userSlice);
+  const dispatch = useAppDispatch();
 
-    const { roomsInfo, myInfo, currentRoom } = useAppSelector((state) => state.userSlice);
-    const dispatch = useAppDispatch();
-
-    const loadRoomChat = useCallback((id: number) => {
-      dispatch(loadRoomChats(id));
-      dispatch(setCurrentRoom({ currentRoom: id }));
+  const loadRoomChat = useCallback((id: number) => {
+    dispatch(loadRoomChats(id));
+    dispatch(setCurrentRoom({ currentRoom: id }));
   }, [dispatch]);
+
+  const addChat = useCallback((data: any) => {
+    dispatch(addChannelChat({ data }))
+  }, [dispatch]);
+
+  useEffect(() => {
+    socket?.on('message', addChat)
+  }, [addChat, socket])
+
+  useEffect(() => {
+    console.log('소켓 연결')
+    socket?.emit('login', { id: myInfo.id, channels: roomsInfo.map((v: any) => v.id)})
+  }, [socket, roomsInfo, myInfo])
 
     return (
         <div className="flex h-screen antialiased text-gray-800">

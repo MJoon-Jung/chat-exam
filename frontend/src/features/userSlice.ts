@@ -1,11 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
+  createChat,
   createRoom,
   joinRoom,
   loadRoom,
   loadRoomChats,
   loadRooms,
   login,
+  searchRoom,
   signup,
 } from "../actions/user";
 import { User } from "../types/user.type";
@@ -16,7 +18,7 @@ const userSlice = createSlice({
     myInfo: null as any,
     roomsInfo: [] as any,
     chatsInfo: {} as any,
-    currentRoom: null as number | null,
+    currentRoom: null as any,
     loadMyInfoLoading: false,
     loadMyInfoDone: false,
     loadMyInfoError: null as string | null,
@@ -32,6 +34,9 @@ const userSlice = createSlice({
     joinRoomLoading: false,
     joinRoomDone: false,
     joinRoomError: null as any,
+    searchRoomLoading: false,
+    searchRoomDone: false,
+    searchRoomError: null as any,
     loadRoomLoading: false,
     loadRoomDone: false,
     loadRoomError: null as any,
@@ -41,11 +46,18 @@ const userSlice = createSlice({
     loadRoomChatsLoading: false,
     loadRoomChatsDone: false,
     loadRoomChatsError: null as any,
+    createChatLoading: false,
+    createChatDone: false,
+    createChatError: null as any,
   },
   reducers: {
     setCurrentRoom: (state, action: PayloadAction<{ currentRoom: number }>) => {
       console.log(action.payload.currentRoom);
       state.currentRoom = action.payload.currentRoom;
+    },
+    addChannelChat: (state, action: PayloadAction<{ data: any }>) => {
+      const { data } = action.payload;
+      state.chatsInfo[data.ChannelId].ChannelChats.push(data);
     },
   },
   extraReducers: (builder) => {
@@ -105,6 +117,19 @@ const userSlice = createSlice({
         state.joinRoomLoading = false;
         state.joinRoomError = action.payload;
       })
+      .addCase(searchRoom.pending, (state) => {
+        state.searchRoomLoading = true;
+        state.searchRoomDone = false;
+        state.searchRoomError = null;
+      })
+      .addCase(searchRoom.fulfilled, (state, action) => {
+        state.searchRoomLoading = false;
+        state.searchRoomDone = true;
+      })
+      .addCase(searchRoom.rejected, (state, action) => {
+        state.searchRoomLoading = false;
+        state.searchRoomError = action.payload;
+      })
       .addCase(loadRoom.pending, (state) => {
         state.loadRoomLoading = true;
         state.loadRoomDone = false;
@@ -142,16 +167,28 @@ const userSlice = createSlice({
         state.loadRoomChatsLoading = false;
         state.loadRoomChatsDone = true;
         const z = action.payload;
-        state.chatsInfo = { ...state.chatsInfo, ...z };
+        state.chatsInfo = { ...state.chatsInfo, [z.id]: z };
       })
       .addCase(loadRoomChats.rejected, (state, action) => {
         state.loadRoomChatsLoading = false;
         state.loadRoomChatsError = action.payload;
       })
-
+      .addCase(createChat.pending, (state) => {
+        state.createChatLoading = true;
+        state.createChatDone = false;
+        state.createChatError = null;
+      })
+      .addCase(createChat.fulfilled, (state, action) => {
+        state.createChatLoading = false;
+        state.createChatDone = true;
+      })
+      .addCase(createChat.rejected, (state, action) => {
+        state.createChatLoading = false;
+        state.createChatError = action.payload;
+      })
       .addDefaultCase((state) => state);
   },
 });
 
-export const { setCurrentRoom } = userSlice.actions;
+export const { setCurrentRoom, addChannelChat } = userSlice.actions;
 export default userSlice.reducer;

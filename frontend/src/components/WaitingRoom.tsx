@@ -1,28 +1,50 @@
 import React, { useCallback } from 'react';
-import { createRoom, searchRoom } from '../actions/user';
+import { createRoom, joinRoom, searchRoom } from '../actions/user';
+import userSlice from '../features/userSlice';
 import useInput from '../hooks/useInput';
-import { useAppDispatch } from '../store/store';
+import { useAppDispatch, useAppSelector } from '../store/store';
 
 const WaitingRoom = () => {
 
-    const [createName, onChangeCreateName] = useInput('');
-    const [joinName, onChangeJoinName] = useInput('');
+    const { joinRoomError, joinRoomDone, joinRoomLoading, searchRoomDone, searchRoomError, searchRoomLoading } = useAppSelector((state) => state.userSlice)
+
+    const [createName, onChangeCreateName, setCreateName] = useInput('');
+    const [joinName, onChangeJoinName, setJoinName] = useInput('');
 
     const dispatch = useAppDispatch();
 
-    // const onClickCreateListener = (e: React.FormEvent<HTMLFormElement>) => {
-    //     e.preventDefault();
-    //     dispatch(createRoom(createName));
-    // }
+    const setupValue = useCallback(() => {
+        setCreateName('');
+        setJoinName('');
+    }, [setCreateName, setJoinName])
+    
 
     const onClickCreateListener = useCallback(() => {
         dispatch(createRoom(createName));
-    }, [dispatch, createName]);
+        setupValue();
+    }, [dispatch, createName, setupValue]);
 
     const onClickJoinListener = useCallback(async () => {
-        const room = await dispatch(searchRoom(joinName))
-        alert(room);
-    }, [dispatch, joinName]);
+        const room: any = await dispatch(searchRoom(joinName))
+        const roomInfo = room.payload;
+        if(searchRoomError) {
+            alert('잘못된 룸 이름입니다.')
+            setupValue();
+            return;
+        }
+        const ans = window.confirm(`${roomInfo[0].name}에 입장하시겠습니까?`)
+        if(ans) {
+            const z = await dispatch(joinRoom(roomInfo[0].id))
+            if(joinRoomDone) {
+                alert('입장 성공');
+            }
+            if(joinRoomError) {
+                alert('입장 실패');
+            }
+        }
+        setupValue();
+        
+    }, [dispatch, joinName, setupValue, joinRoomDone, joinRoomError, searchRoomError]);
 
     return (
         <div className="p-24">

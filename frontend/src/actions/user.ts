@@ -68,7 +68,7 @@ export const searchRoom = createAsyncThunk(
   "user/searchRoom",
   async (channelName: string, { rejectWithValue }) => {
     try {
-      const response = await client.get(`channel?name=${channelName}`);
+      const response = await client.get(`channel/search?name=${channelName}`);
       return response.data;
     } catch (err: any) {
       return rejectWithValue(err.response.data);
@@ -107,4 +107,18 @@ export const loadRoomChats = createAsyncThunk(
       rejectWithValue(err.response.data);
     }
   }
-);  
+);
+
+export const createChat = createAsyncThunk(
+  "user/createChat",
+  async (data: any, { rejectWithValue }) => {
+    try {
+      const response = await client.post(`channel/${data.channelId}/chats`, {
+        content: data.content,
+      });
+      return response.data;
+    } catch (err: any) {
+      rejectWithValue(err.response.data);
+    }
+  }
+);
