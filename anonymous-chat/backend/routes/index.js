@@ -39,14 +39,14 @@ router.get('/', async (req, res, next) => {
 
 router.get('/room/:id/chats', async(req, res, next) => {
     try{
-        const room = await Room.findByPk(req.params.id );
-        const io = req.app.get('io');
+        const id = parseInt(req.params.id, 10);
+        const room = await Room.findByPk(id);
         if(!room) {
             res.status(404).send('존재하지 않는 채팅방입니다.')
         }
         const chats = await Chat.findAll({ where: { roomId: room.id }, order: ['createdAt'] });
 
-        return res.status(200).send(chats);
+        return res.status(200).json({ [id]: chats });
     }catch(error) {
         console.error(error);
         next(error);
@@ -67,12 +67,13 @@ router.post('/room', async (req, res, next) => {
 
 router.post('/room/:id/chat', async(req, res, next) => {
     try{
+        const id = parseInt(req.params.id, 10);
         const chat = await Chat.create({
-            roomId: req.params.id,
+            roomId: id,
             user: req.session.color,
             content: req.body.content,
         });
-        req.app.get('io').of('/').to(req.params.id).emit('chat', chat);
+        req.app.get('io').of('/').to(id).emit('chat', chat);
         res.send('ok');
     }catch(error) {
         console.error(error);
@@ -83,12 +84,13 @@ router.post('/room/:id/chat', async(req, res, next) => {
 router.post('/room/:id/image', upload.single('image'), async(req, res ,next) => {
     console.log(req.file);
     try{
+        const id = parseInt(req.params.id, 10);
         const chat = await Chat.create({
             user: req.session.color,
-            roomId: req.params.id,
+            roomId: id,
             image: req.file.filename,
         });
-        req.app.get('io').of('/chat').to(req.parames.id).emit('chat', chat);
+        req.app.get('io').of('/chat').to(id).emit('chat', chat);
         res.send('ok');
     }catch(error) {
         console.error('error');
@@ -97,9 +99,10 @@ router.post('/room/:id/image', upload.single('image'), async(req, res ,next) => 
 })
 router.delete('/room/:id', async(req, res , next) => {
     try {
-        await Room.delete({ id: req.params.id });
-        await Chat.delete({ roomId: req.params.id });
-        req.app.get('io').of('/room').emit('removeRoom', req.params.id );
+        const id = parseInt(req.params.id, 10);
+        await Room.delete({ id, });
+        await Chat.delete({ roomId: id });
+        req.app.get('io').of('/room').emit('removeRoom', id );
         res.send('ok');
     }catch(error) {
         console.error(error);

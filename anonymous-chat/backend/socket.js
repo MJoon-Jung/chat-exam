@@ -11,10 +11,13 @@ module.exports = (server, app) => {
 
     io.of('/').on('connection', (socket) => {
         console.log('chat 네임스페이스에 접속');
-        socket.on('joinRoom', (roomId) => { 
-            socket.join(roomId);
-            console.log(`${roomId}room에 입장하셨습니다.`);
-            socket.to(`${roomId}`).emit('joined', '누군가 들어왔음')
+        socket.on('joinRoom', (rooms) => { 
+            console.log(rooms);
+            rooms.map((room) => {
+                socket.join(room);
+                console.log(`${room}room에 입장하셨습니다.`);
+                io.of('/').to(room).emit('joined', '누군가 들어왔음');
+            })
         })
         socket.on('disconnect', () => {
             console.log('chat 네임스페이스 접속 해제');
