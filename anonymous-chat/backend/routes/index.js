@@ -46,7 +46,7 @@ router.get('/room/:id/chats', async(req, res, next) => {
         }
         const chats = await Chat.findAll({ where: { roomId: room.id }, order: ['createdAt'] });
 
-        return res.status(200).json({ [id]: chats });
+        return res.status(200).json({ id, chats });
     }catch(error) {
         console.error(error);
         next(error);
@@ -73,7 +73,7 @@ router.post('/room/:id/chat', async(req, res, next) => {
             user: req.session.color,
             content: req.body.content,
         });
-        req.app.get('io').of('/').to(id).emit('chat', chat);
+        req.app.get('io').of('/').to(id).emit('chat', { id, chat });
         res.send('ok');
     }catch(error) {
         console.error(error);

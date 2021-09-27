@@ -18,13 +18,17 @@ export default createStore<ModuleAState>({
       state.rooms = payload;
     },
     loadChats(state, payload) {
-      state.roomChats[state.liveWatch] = payload;
+      state.roomChats[payload.id] = payload.chats;
     },
     createRoom(state, payload) {
       state.rooms.push(payload);
     },
     createChat(state, payload) {
-      state.roomChats[state.liveWatch].push(payload);
+      try {
+        state.roomChats[payload.id].push(payload.chat);
+      } catch (err) {
+        err instanceof TypeError || console.error(err);
+      }
     },
     setLiveWatch(state, payload) {
       state.liveWatch = payload;

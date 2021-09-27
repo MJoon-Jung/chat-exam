@@ -1,13 +1,12 @@
 <template>
   <div>
     <ChatForm />
-    <ChatList v-if="liveWatch"/>
+    <ChatList />
   </div>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from "vue";
-import { useStore } from "vuex";
+import { defineComponent } from "vue";
 import ChatForm from "./ChatForm.vue";
 import ChatList from "./ChatList.vue";
 
@@ -17,9 +16,7 @@ export default defineComponent({
     ChatList,
   },
   setup() {
-    const store = useStore();
-    const liveWatch = computed(() => store.getters["getLiveWatch"]);
-    return { liveWatch };
+    return {};
   },
 });
 </script>

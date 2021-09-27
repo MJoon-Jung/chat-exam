@@ -13,12 +13,7 @@
 </template>
 
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-  getCurrentInstance,
-  onUpdated,
-} from "vue";
+import { computed, defineComponent, getCurrentInstance, onUpdated } from "vue";
 import { useStore } from "vuex";
 
 export default defineComponent({
@@ -30,7 +25,7 @@ export default defineComponent({
     store.dispatch("loadRooms");
 
     const rooms = computed(() => store.getters["getRooms"]);
-    
+
     const setWatchRoom = (id: number) => {
       store.commit("setLiveWatch", id);
       const isRoomChats = computed(() => store.getters["isRoomChats"]);
